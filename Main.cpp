@@ -55,28 +55,6 @@ void MainWindow::CalculateLayout()
     }
 }
 
-std::string input;
-std::string HWNDToString(HWND inputA)
-{
-    std::string s;
-    int len = GetWindowTextLength(inputA);
-    if (len > 0)
-    {
-        s.resize(len + 1);
-        len = GetWindowText(inputA, (LPWSTR)&s[0], s.size());
-        s.resize(len);
-    }
-    return s;
-}
-
-const wchar_t* String2WCHAR(std::string string)
-{
-    std::string narrow_string(string);
-    std::wstring wide_string = std::wstring(narrow_string.begin(), narrow_string.end());
-    const wchar_t* result = wide_string.c_str();
-    return result;
-}
-
 HRESULT MainWindow::CreateGraphicsResources()
 {
     HRESULT hr = S_OK;
@@ -93,7 +71,6 @@ HRESULT MainWindow::CreateGraphicsResources()
 
         if (SUCCEEDED(hr))
         {
-
             const D2D1_COLOR_F MainColor = D2D1::ColorF(1.0f, 1.0f, 0);
             hr = pRenderTarget->CreateSolidColorBrush(MainColor, &pBrush);
 
@@ -106,16 +83,11 @@ HRESULT MainWindow::CreateGraphicsResources()
             const D2D1_COLOR_F GrassColor = D2D1::ColorF(0.28f, 0.72f, 0.20f, 1.0f);
             hr = pRenderTarget->CreateSolidColorBrush(GrassColor, &GrassColorBrush);
 
-            hr = DWriteCreateFactory(
-                DWRITE_FACTORY_TYPE_SHARED,
-                __uuidof(pDWriteFactory),
-                reinterpret_cast<IUnknown**>(&pDWriteFactory)
-            );
-
+            hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(pDWriteFactory), reinterpret_cast<IUnknown**>(&pDWriteFactory));
             hr = pDWriteFactory->CreateTextFormat(
-                msc_fontName,
-                NULL,
-                DWRITE_FONT_WEIGHT_NORMAL,
+                msc_fontName, 
+                NULL, 
+                DWRITE_FONT_WEIGHT_NORMAL, 
                 DWRITE_FONT_STYLE_NORMAL,
                 DWRITE_FONT_STRETCH_NORMAL,
                 msc_fontSize,
@@ -160,11 +132,15 @@ void MainWindow::OnPaint()
         pRenderTarget->DrawLine(Point2F(10, 500), Point2F(90, 500), GallowColorBrush, 20.0f, NULL);
         pRenderTarget->DrawLine(Point2F(140, 100), Point2F(50, 200), GallowColorBrush, 20.0f, NULL);
 
+        float width = pRenderTarget->GetSize().width;
+        float height = pRenderTarget->GetSize().height;
+        const wchar_t* text = L"paster";
+
         pRenderTarget->DrawText(
-            (WCHAR*)input.c_str(),
-            input.length(),
+            text,
+            sizeof(text),
             pTextFormat,
-            D2D1::RectF(0, 527, pRenderTarget->GetSize().width, pRenderTarget->GetSize().height),
+            D2D1::RectF(0, 527, width, height),
             GallowColorBrush
         );
 
@@ -241,15 +217,6 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         OnPaint();
         return 0;
 
-    case WM_SIZE:
-        Resize();
-        return 0;
-
-    case WM_CHAR:
-        if (LOWORD(wParam) == 1)
-        {
-            input = HWNDToString(m_hwnd);
-        }
     }
     return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
 }
